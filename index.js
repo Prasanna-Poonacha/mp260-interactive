@@ -121,8 +121,8 @@ const formatJSON = (resultObject, sheetName) => {
             for (var key in obj) {
                 newObj[array[0][key]] = obj[key];
             }
+            acc.push(newObj);
         }
-        acc.push(newObj);
         return acc;
     }, []);
 }
