@@ -83,10 +83,22 @@ const generate = (data) => {
 
 //function for comparing reports
 const compare = (data) => {
-    if (data.confirmation.toLowerCase() !== "y") {
-        return;
-    }
-    console.log("Comparing report...");
+    // if (data.confirmation.toLowerCase() !== "y") {
+    //     return;
+    // }
+    data.source = "Cheat_Sheet.xlsx";
+    const result = excelToJson({
+        sourceFile: path.resolve(data.source),
+        sheets: [
+            {
+                name: "Cheat Sheet"
+            }
+        ]
+    });
+
+    //console.log(JSON.stringify(result));
+    var newObject = formatJSON(result, "Cheat Sheet");
+    console.log(newObject);
     setTimeout(() => { console.log("Report generated!") }, 1000)
 }
 
@@ -102,5 +114,69 @@ const groupBy = (objectArray, property) => {
     }, {});
 }
 
+const formatJSON = (resultObject, sheetName) => {
+    return resultObject[sheetName].reduce((acc, obj, index, array) => {
+        var newObj = {}
+        if (index !== 0) {
+            for (var key in obj) {
+                newObj[array[0][key]] = obj[key];
+            }
+        }
+        acc.push(newObj);
+        return acc;
+    }, []);
+}
+
 // Export all methods
 module.exports = { generate, compare };
+
+
+// header: {
+                //     rows: 1
+                // }
+                // columnToKey:{
+                //     '*':'{{columnHeader}}'
+                // }
+                // columnToKey: {
+                //     A: "CATEGORY_DESC",
+                //     B: "STORE_STATUS",
+                //     C: "DIGITAL_STATUS",
+                //     D: "SHARED_UNIQUE",
+                //     E: "MASTER_STYLE_GROUPING",
+                //     F: "FLEX_STYLE",
+                //     G: "GENERIC",
+                //     H: "MERCH_STYLE_DESC",
+                //     I: "MERCH_COLOR_DESC",
+                //     K: "FLEX_STYLE_DESC",
+                //     L: "CHOICE_CODE",
+                //     M: "NEW_CARRYOVER",
+                //     N: "STORE_ON_FLOOR",
+                //     O: "STORE_OFF_FLOOR",
+                //     P: "Grouping Direction",
+                //     Q: "DIGITAL_ROOT_STYLE",
+                //     R: "DIGITAL_COLOR_CODE",
+                //     S: "DIGITAL_MARKETING_NAME",
+                //     T: "DIGITAL_ON_FLOOR",
+                //     U: "Show on Site",
+                //     V: "Show on Mobile",
+                //     W: "New Flag",
+                //     X: "Keyword Search",
+                //     Y: "Certona",
+                //     Z: "Editable",
+                //     AA: "Color Swap",
+                //     AB: "Display Swatch",
+                //     AC: "Show Swatch",
+                //     AD: "Pink Style",
+                //     AE: "Pink Bra Style",
+                //     AF: "Pink Bra Style",
+                //     AG: "Roadmapping 1",
+                //     AH: "Roadmapping 2",
+                //     AI: "Roadmapping 3",
+                //     AJ: "Bangalore's Comments",
+                //     AK: "Kesha's Comments",
+                //     AL: "FLEX_SILHOUETE",
+                //     AM: "FLEX_COLLECTION",
+                //     AN: "MERCHANT_SILHOUETTE",
+                //     AO: "MAGTEMPLATES_ID",
+                //     AP: "ROW_ID"
+                //   }
