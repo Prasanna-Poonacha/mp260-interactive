@@ -9,14 +9,16 @@ const colorList = "Color\r\nList";
 const moment = require("moment");
 
 const generate = (data) => {
-    if (!data.mediatype){
+    if (data.confirmation.toLowerCase() !== "y") {
+        return;
+    }
+    if (!data.mediatype) {
         console.log(chalk.yellow("Provide the media type - eg : ED-2018"));
-        console.log(chalk.white("Use the following format : " + chalk.blue("mp-260 --media=<MediaType>")));
         return;
     }
     console.log(chalk.yellow("1. Parsing MP260..."));
     const result = excelToJson({
-        sourceFile: 'MP260.xlsx',
+        sourceFile: data.source,
         sheets: [
             {
                 name: "Other Retail",
@@ -35,7 +37,7 @@ const generate = (data) => {
     console.log(chalk.yellow("2. Filtering MP260 by media - " + chalk.blue(data.mediatype)));
     var filteredData = result["Other Retail"].filter(r => r.Media === data.mediatype);
 
-    if(!filteredData.length){
+    if (!filteredData.length) {
         console.log(chalk.white("No records found for media : " + chalk.blue(data.mediatype)));
         console.log(chalk.white("Try using a different media!"));
         return;
@@ -77,6 +79,9 @@ const generate = (data) => {
 }
 
 const compare = (data) => {
+    if (data.confirmation.toLowerCase() !== "y") {
+        return;
+    }
     console.log("report compared!");
 }
 

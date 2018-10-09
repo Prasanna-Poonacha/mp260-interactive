@@ -23,7 +23,7 @@ const generateQuestions = [
     },
     {
         type: 'input',
-        name: 'confimation',
+        name: 'confirmation',
         message: 'Do you want to continue generate the report?(y/n)'
     }
 ];
@@ -43,7 +43,7 @@ const compareQuestions = [
     },
     {
         type: 'input',
-        name: 'confimation',
+        name: 'confirmation',
         message: 'Do you want to continue comparing the reports?(y/n)'
     }
 ];
