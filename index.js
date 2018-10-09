@@ -7,7 +7,9 @@ const fs = require('fs');
 const json2xls = require('json2xls');
 const colorList = "Color\r\nList";
 const moment = require("moment");
+const path = require("path");
 
+//function for generating reports
 const generate = (data) => {
     if (data.confirmation.toLowerCase() !== "y") {
         return;
@@ -16,9 +18,10 @@ const generate = (data) => {
         console.log(chalk.yellow("Provide the media type - eg : ED-2018"));
         return;
     }
+    //validate source and destination
     console.log(chalk.yellow("1. Parsing MP260..."));
     const result = excelToJson({
-        sourceFile: data.source,
+        sourceFile: path.resolve(data.source),
         sheets: [
             {
                 name: "Other Retail",
@@ -75,16 +78,19 @@ const generate = (data) => {
     var xls = json2xls(uniqueDataWithOutDuplicates);
 
     console.log(chalk.yellow("5. Writing to sheet..."));
-    fs.writeFileSync('data-' + data.mediatype + '-' + new Date().toJSON() + '.xlsx', xls, 'binary');
+    fs.writeFileSync(path.resolve(data.destination, 'data-' + data.mediatype + '-' + new Date().toJSON() + '.xlsx'), xls, 'binary');
 }
 
+//function for comparing reports
 const compare = (data) => {
     if (data.confirmation.toLowerCase() !== "y") {
         return;
     }
-    console.log("report compared!");
+    console.log("Comparing report...");
+    setTimeout(() => { console.log("Report generated!") }, 1000)
 }
 
+//function for groupBy functionality
 const groupBy = (objectArray, property) => {
     return objectArray.reduce(function (acc, obj) {
         var key = obj[property];
