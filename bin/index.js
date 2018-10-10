@@ -100,3 +100,5 @@ program
 // }
 
 program.parse(process.argv);
+
+//compare({destination:".",source:"."});

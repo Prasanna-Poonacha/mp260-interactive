@@ -97,9 +97,88 @@ const compare = (data) => {
     });
 
     //console.log(JSON.stringify(result));
+    //concatenate
     var newObject = formatJSON(result, "Cheat Sheet");
-    console.log(newObject);
-    setTimeout(() => { console.log("Report generated!") }, 1000)
+    var concatenatedCheatSheet = newObject.map(row => {
+        row.RowStyleColorList = row["DIGITAL_ROOT_STYLE"] + row["DIGITAL_COLOR_CODE"];
+        return row;
+    });
+
+    //comparision with MP260
+    //setTimeout(() => { console.log("Report generated!") }, 1000)
+
+    // Read generated MP260 file
+    const generatedMP260 = excelToJson({
+        sourceFile: "generatedMP260.xlsx",
+        sheets: [
+            {
+                name: "Sheet 1"
+            }
+        ]
+    });
+
+    var formattedMP260 = formatJSON(generatedMP260, "Sheet 1");
+
+    //TODO refactor "Sheet 1" removal
+
+    // Compare concatinated filed values of MP260 and cheat_sheet
+    let cheatSheetMap = groupBy(concatenatedCheatSheet, "RowStyleColorList");
+    let MP260Map = groupBy(formattedMP260, "RowStyleColorList");
+    // Compare and write to MP260
+    // if present - add comments as "NEW" in MP260
+    // if not - add comments as "CARRYOVER" in MP260
+    compareAndUpdate(MP260Map, cheatSheetMap, "NEW", "CARRYOVER");
+    // compare and write to cheatSheet 
+    // if present - add comments as "IN MP260" in cheatsheet
+    // if not - add comments as "NOT IN MP260" in cheatsheet
+    compareAndUpdate(cheatSheetMap, MP260Map, "IN MP260", "NOT IN MP260");
+    // map needs to be converted back to list to write in excel
+    cheatSheetMap = convertMapToList(cheatSheetMap);
+    MP260Map = convertMapToList(MP260Map);
+    // write the data back to excel file
+    writeJSONtoXL(cheatSheetMap, "cheatSheetWithComments.xlsx")  // NOT working properly
+    writeJSONtoXL(MP260Map, "MP260WithComments.xlsx")            // Works GREAT
+
+    // Revenge for commenting my code
+    // var dummy = [];
+    // Object.keys(cheatSheetMap).map((key, index) => { 
+    //     dummy.push(cheatSheetMap[key][0]);
+    // })
+    // console.log(JSON.stringify(dummy));
+}
+
+const writeJSONtoXL = ( data, filePath) => {
+    let xl = json2xls(data);
+    fs.writeFileSync(filePath, xl, 'binary');
+}
+
+/**
+ * Compares firstMap and secondMap, 
+ * if entry is not in firstMap, adds valueIfNotPresent to comments
+ * if entry is present, adds valueIfPresent
+ * Does not return any new value and it alteres the original object
+ */
+
+const compareAndUpdate = (firstMap, secondMap, valueIfPresent, valueIfNotPresent) => {
+    for (let row in firstMap) {
+        if (secondMap[row]) {
+            firstMap[row][0]["Comments"] = valueIfPresent;
+            // add new field in row of firstMap with valuePresent
+        } else {
+            firstMap[row][0]["Comments"] = valueIfNotPresent;
+            // add new field in row of firstMap with valueNotPresent
+        }
+    }
+}
+/** 
+ * Removes the keys from the map and returns only the values as array to be written to excel file
+*/
+const convertMapToList = (map) => {
+    var arrayList = [];
+    Object.keys(map).map((key, index) => { 
+        arrayList.push(map[key][0]);
+    })
+    return arrayList;
 }
 
 //function for groupBy functionality
