@@ -21,7 +21,7 @@ const generate = (data) => {
     //validate source and destination
     console.log(chalk.yellow("1. Parsing MP260..."));
     const result = excelToJson({
-        sourceFile: path.resolve(data.source),
+        sourceFile: path.resolve(data.source, data.filename),
         sheets: [
             {
                 name: "Other Retail",

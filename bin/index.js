@@ -9,22 +9,36 @@ const generateQuestions = [
     {
         type: 'input',
         name: 'mediatype',
-        message: 'Enter media type ...'
+        message: 'Enter media type ...',
+        default: 'ED-2018'
     },
     {
         type: 'input',
         name: 'source',
-        message: 'Enter source ...'
+        message: 'Enter source ...',
+        default: '.'
     },
     {
         type: 'input',
         name: 'destination',
-        message: 'Enter destination ...'
+        message: 'Enter destination ...',
+        default: '.'
     },
     {
         type: 'input',
+        name: 'filename',
+        message: 'Enter filename(eg: MP260.xlsx) ...',
+        default: 'MP260.xlsx'
+    },
+    {
+        type: 'list',
         name: 'confirmation',
-        message: 'Do you want to continue generate the report?(y/n)'
+        message: 'Do you want to continue generate the report?(y/n)',
+        choices: [
+            "y",
+            "n"
+        ],
+        default: 'y'
     }
 ];
 
@@ -34,17 +48,24 @@ const compareQuestions = [
     {
         type: 'input',
         name: 'source',
-        message: 'Enter source ...'
+        message: 'Enter source ...',
+        default: '.'
     },
     {
         type: 'input',
         name: 'destination',
-        message: 'Enter destination ...'
+        message: 'Enter destination ...',
+        default: '.'
     },
     {
-        type: 'input',
+        type: 'list',
         name: 'confirmation',
-        message: 'Do you want to continue comparing the reports?(y/n)'
+        message: 'Do you want to continue generate the report?(y/n)',
+        choices: [
+            "y",
+            "n"
+        ],
+        default: 'y'
     }
 ];
 
