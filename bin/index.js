@@ -58,6 +58,18 @@ const compareQuestions = [
         default: '.'
     },
     {
+        type: 'input',
+        name: 'filename',
+        message: 'Enter filename ...',
+        default: 'Cheatsheet_new.xlsx'
+    },
+    {
+        type: 'input',
+        name: 'mp260',
+        message: 'Enter generated MP260 filename ...',
+        default: 'generatedMP260.xlsx'
+    },
+    {
         type: 'list',
         name: 'confirmation',
         message: 'Do you want to continue generate the report?(y/n)',
@@ -100,5 +112,3 @@ program
 // }
 
 program.parse(process.argv);
-
-//compare({destination:".",source:"."});

@@ -83,33 +83,40 @@ const generate = (data) => {
 
 //function for comparing reports
 const compare = (data) => {
-    // if (data.confirmation.toLowerCase() !== "y") {
-    //     return;
-    // }
-    data.source = "Cheat_Sheet.xlsx";
+    if (data.confirmation.toLowerCase() !== "y") {
+        return;
+    }
+    //data.source = "Cheatsheet_new.xlsx";
     const result = excelToJson({
-        sourceFile: path.resolve(data.source),
-        sheets: [
-            {
-                name: "Cheat Sheet"
-            }
-        ]
+        sourceFile: path.resolve(data.source, data.filename)
     });
 
-    //console.log(JSON.stringify(result));
-    //concatenate
-    var newObject = formatJSON(result, "Cheat Sheet");
-    var concatenatedCheatSheet = newObject.map(row => {
-        row.RowStyleColorList = row["DIGITAL_ROOT_STYLE"] + row["DIGITAL_COLOR_CODE"];
-        return row;
+    var sheetData = [];
+    Object.keys(result).map((key, index) => {
+        var sheet = formatJSON(result[key]).map(row => {
+            row.RowStyleColorList = row["DIGITAL_SELLING_STYLE"] + row["DIGITAL_COLOR_CODE"];
+            row.SheetName = key;
+            return row;
+        });
+
+        sheetData.push(...sheet);
     });
 
-    //comparision with MP260
-    //setTimeout(() => { console.log("Report generated!") }, 1000)
+    var requiredData = sheetData.map(row => {
+        return {
+            "CATEGORY_DESC": row.CATEGORY_DESC || "Description Not Available!",
+            "DIGITAL_SELLING_STYLE": row.DIGITAL_SELLING_STYLE || "Selling Style Not Available",
+            "DIGITAL_ROOT_STYLE": row.DIGITAL_ROOT_STYLE || "Root Style Not Available",
+            "DIGITAL_COLOR_CODE": row.DIGITAL_COLOR_CODE || "Color Code Not Available",
+            "DIGITAL_ON_FLOOR": row.DIGITAL_ON_FLOOR || "On Floor Not Available",
+            "SheetName": row.SheetName,
+            "RowStyleColorList": row.RowStyleColorList
+        }
+    });
 
     // Read generated MP260 file
     const generatedMP260 = excelToJson({
-        sourceFile: "generatedMP260.xlsx",
+        sourceFile: path.resolve(data.source, data.mp260),
         sheets: [
             {
                 name: "Sheet 1"
@@ -117,37 +124,20 @@ const compare = (data) => {
         ]
     });
 
-    var formattedMP260 = formatJSON(generatedMP260, "Sheet 1");
+    var formattedMP260 = formatJSONBySheetName(generatedMP260, "Sheet 1");
 
-    //TODO refactor "Sheet 1" removal
-
-    // Compare concatinated filed values of MP260 and cheat_sheet
-    let cheatSheetMap = groupBy(concatenatedCheatSheet, "RowStyleColorList");
+    let cheatSheetMap = groupBy(requiredData, "RowStyleColorList");
     let MP260Map = groupBy(formattedMP260, "RowStyleColorList");
-    // Compare and write to MP260
-    // if present - add comments as "NEW" in MP260
-    // if not - add comments as "CARRYOVER" in MP260
     compareAndUpdate(MP260Map, cheatSheetMap, "NEW", "CARRYOVER");
-    // compare and write to cheatSheet 
-    // if present - add comments as "IN MP260" in cheatsheet
-    // if not - add comments as "NOT IN MP260" in cheatsheet
     compareAndUpdate(cheatSheetMap, MP260Map, "IN MP260", "NOT IN MP260");
-    // map needs to be converted back to list to write in excel
     cheatSheetMap = convertMapToList(cheatSheetMap);
     MP260Map = convertMapToList(MP260Map);
     // write the data back to excel file
-    writeJSONtoXL(cheatSheetMap, "cheatSheetWithComments.xlsx")  // NOT working properly
-    writeJSONtoXL(MP260Map, "MP260WithComments.xlsx")            // Works GREAT
-
-    // Revenge for commenting my code
-    // var dummy = [];
-    // Object.keys(cheatSheetMap).map((key, index) => { 
-    //     dummy.push(cheatSheetMap[key][0]);
-    // })
-    // console.log(JSON.stringify(dummy));
+    writeJSONtoXL(cheatSheetMap, "cheatSheetWithComments.xlsx");
+    writeJSONtoXL(MP260Map, "MP260WithComments.xlsx");
 }
 
-const writeJSONtoXL = ( data, filePath) => {
+const writeJSONtoXL = (data, filePath) => {
     let xl = json2xls(data);
     fs.writeFileSync(filePath, xl, 'binary');
 }
@@ -162,10 +152,16 @@ const writeJSONtoXL = ( data, filePath) => {
 const compareAndUpdate = (firstMap, secondMap, valueIfPresent, valueIfNotPresent) => {
     for (let row in firstMap) {
         if (secondMap[row]) {
-            firstMap[row][0]["Comments"] = valueIfPresent;
+            //firstMap[row][0]
+            firstMap[row].map((r) => {
+                r["Comments"] = valueIfPresent;
+            })
             // add new field in row of firstMap with valuePresent
         } else {
-            firstMap[row][0]["Comments"] = valueIfNotPresent;
+            //firstMap[row][0]["Comments"] = valueIfNotPresent;
+            firstMap[row].map((r) => {
+                r["Comments"] = valueIfNotPresent;
+            })
             // add new field in row of firstMap with valueNotPresent
         }
     }
@@ -175,8 +171,8 @@ const compareAndUpdate = (firstMap, secondMap, valueIfPresent, valueIfNotPresent
 */
 const convertMapToList = (map) => {
     var arrayList = [];
-    Object.keys(map).map((key, index) => { 
-        arrayList.push(map[key][0]);
+    Object.keys(map).map((key, index) => {
+        arrayList.push(...map[key]);
     })
     return arrayList;
 }
@@ -193,8 +189,21 @@ const groupBy = (objectArray, property) => {
     }, {});
 }
 
-const formatJSON = (resultObject, sheetName) => {
+const formatJSONBySheetName = (resultObject, sheetName) => {
     return resultObject[sheetName].reduce((acc, obj, index, array) => {
+        var newObj = {}
+        if (index !== 0) {
+            for (var key in obj) {
+                newObj[array[0][key]] = obj[key];
+            }
+            acc.push(newObj);
+        }
+        return acc;
+    }, []);
+}
+
+const formatJSON = (resultArray) => {
+    return resultArray.reduce((acc, obj, index, array) => {
         var newObj = {}
         if (index !== 0) {
             for (var key in obj) {
