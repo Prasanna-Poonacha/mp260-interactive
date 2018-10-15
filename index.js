@@ -47,7 +47,7 @@ const generate = (data) => {
     }
 
     filteredData.map((row) => {
-        if (row[colorList].split(',').length !== 1) {
+        if (row[colorList].split(',').length !== 0) {
             //console.log(chalk.blue("Number of values - " + row[colorList].split(',').length + " -->" + JSON.stringify(row[colorList])));
             row[colorList].split(',').map(cl => {
                 //console.log(chalk.yellow("Copying rows--> " + cl));
@@ -78,7 +78,7 @@ const generate = (data) => {
     var xls = json2xls(uniqueDataWithOutDuplicates);
 
     console.log(chalk.yellow("5. Writing to sheet..."));
-    fs.writeFileSync(path.resolve(data.destination, 'data-' + data.mediatype + '-' + new Date().toJSON() + '.xlsx'), xls, 'binary');
+    fs.writeFileSync(path.resolve(data.destination, "generatedMP260.xlsx"), xls, 'binary');
 }
 
 //function for comparing reports
@@ -109,6 +109,7 @@ const compare = (data) => {
             "DIGITAL_ROOT_STYLE": row.DIGITAL_ROOT_STYLE || "Root Style Not Available",
             "DIGITAL_COLOR_CODE": row.DIGITAL_COLOR_CODE || "Color Code Not Available",
             "DIGITAL_ON_FLOOR": row.DIGITAL_ON_FLOOR || "On Floor Not Available",
+            "Grouping Direction": row["Grouping Direction"] || "Grouping Direction Not Available",
             "SheetName": row.SheetName,
             "RowStyleColorList": row.RowStyleColorList
         }
