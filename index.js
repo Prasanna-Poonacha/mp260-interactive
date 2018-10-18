@@ -127,7 +127,7 @@ const compare = (data) => {
 
     var formattedMP260 = formatJSONBySheetName(generatedMP260, "Sheet 1");
 
-    let cheatSheetMap = groupBy(requiredData, "RowStyleColorList");
+    let cheatSheetMap = groupBy(sheetData, "RowStyleColorList");
     let MP260Map = groupBy(formattedMP260, "RowStyleColorList");
     compareAndUpdate(MP260Map, cheatSheetMap, "NEW", "CARRYOVER");
     compareAndUpdate(cheatSheetMap, MP260Map, "IN MP260", "NOT IN MP260");
