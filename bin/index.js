@@ -2,7 +2,7 @@
 
 const program = require('commander');
 const { prompt } = require('inquirer');
-const { generate, compare, compareMP260s } = require("../index");
+const { generate, compare, compareMP260s, compareCheatsheets } = require("../index");
 
 // Questions for generate function
 const generateQuestions = [
@@ -119,6 +119,43 @@ const compareMP260Questions = [
     }
 ];
 
+const compareCheatsheetQuestions = [
+    {
+        type: 'input',
+        name: 'source',
+        message: 'Key in source ...',
+        default: '.'
+    },
+    {
+        type: 'input',
+        name: 'destination',
+        message: 'Key in destination ...',
+        default: '.'
+    },
+    {
+        type: 'input',
+        name: 'filename1',
+        message: 'Key in previous cheatsheet filename ...',
+        default: 'cheatsheet_old.xlsx'
+    },
+    {
+        type: 'input',
+        name: 'filename2',
+        message: 'Key in current cheatsheet filename ...',
+        default: 'cheatsheet.xlsx'
+    },
+    {
+        type: 'list',
+        name: 'confirmation',
+        message: 'Do you want to continue generate the report?(y/n)',
+        choices: [
+            "y",
+            "n"
+        ],
+        default: 'y'
+    }
+];
+
 program
     .version("0.0.1")
     .description("Digital Commerce Services - Operations Automation");
@@ -144,12 +181,22 @@ program
     });
 
 program
-    .command("compareMP260")
+    .command("compareMP260s")
     .alias("cMP260")
     .description("Compare two MP260s")
     .action(() => {
         prompt(compareMP260Questions).then(answers => {
             compareMP260s(answers);
+        })
+    });
+
+program
+    .command("compareCheatsheets")
+    .alias("cCS")
+    .description("Compare two Cheatsheets")
+    .action(() => {
+        prompt(compareCheatsheetQuestions).then(answers => {
+            compareCheatsheets(answers);
         })
     });
 

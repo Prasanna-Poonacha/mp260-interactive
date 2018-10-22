@@ -272,8 +272,12 @@ const compareMP260s = (data) => {
 
 }
 
+const compareCheatsheets = (data) => {
+    console.log(JSON.stringify(data));
+}
+
 // Export all methods
-module.exports = { generate, compare, compareMP260s };
+module.exports = { generate, compare, compareMP260s, compareCheatsheets };
 
 
 // header: {
