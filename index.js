@@ -61,7 +61,7 @@ const generate = (data) => {
     });
 
 
-    console.log(chalk.yellow("4. Creating unique rows..."));
+    console.log(chalk.yellow("3. Creating unique rows..."));
     var uniqueDataWithOutDuplicates = [];
     var groupByConcatenatedColumn = groupBy(newRowsWithSplitColors, "RowStyleColorList");
     Object.keys(groupByConcatenatedColumn).map((key, index) => {
@@ -77,7 +77,7 @@ const generate = (data) => {
 
     var xls = json2xls(uniqueDataWithOutDuplicates);
 
-    console.log(chalk.yellow("5. Writing to sheet..."));
+    console.log(chalk.yellow("4. Writing to sheet..."));
     fs.writeFileSync(path.resolve(data.destination, "generatedMP260.xlsx"), xls, 'binary');
 }
 
@@ -127,7 +127,7 @@ const compare = (data) => {
 
     var formattedMP260 = formatJSONBySheetName(generatedMP260, "Sheet 1");
 
-    let cheatSheetMap = groupBy(sheetData, "RowStyleColorList");
+    let cheatSheetMap = groupBy(requiredData, "RowStyleColorList");
     let MP260Map = groupBy(formattedMP260, "RowStyleColorList");
     compareAndUpdate(MP260Map, cheatSheetMap, "NEW", "CARRYOVER");
     compareAndUpdate(cheatSheetMap, MP260Map, "IN MP260", "NOT IN MP260");
@@ -164,6 +164,20 @@ const compareAndUpdate = (firstMap, secondMap, valueIfPresent, valueIfNotPresent
                 r["Comments"] = valueIfNotPresent;
             })
             // add new field in row of firstMap with valueNotPresent
+        }
+    }
+}
+
+const compareAndUpdate1 = (firstMap, secondMap, valueIfPresent, valueIfNotPresent) => {
+    for (let row in firstMap) {
+        if (secondMap[row]) {
+            firstMap[row].map((r) => {
+                r["Comments"] = valueIfNotPresent;
+            })
+        } else {
+            firstMap[row].map((r) => {
+                r["Comments"] = valueIfPresent;
+            })
         }
     }
 }
@@ -216,8 +230,50 @@ const formatJSON = (resultArray) => {
     }, []);
 }
 
+const compareMP260s = (data) => {
+
+    if (data.confirmation.toLowerCase() !== "y") {
+        return;
+    }
+
+     // Read generated MP260 file
+     const mp260file1 = excelToJson({
+        sourceFile: path.resolve(data.source, data.filename1),
+        sheets: [
+            {
+                name: "Sheet 1"
+            }
+        ]
+    });
+
+     // Read generated MP260 file
+     const mp260file2 = excelToJson({
+        sourceFile: path.resolve(data.source, data.filename2),
+        sheets: [
+            {
+                name: "Sheet 1"
+            }
+        ]
+    });
+
+    var formattedmp260file1 = formatJSONBySheetName(mp260file1, "Sheet 1");
+    var formattedmp260file2 = formatJSONBySheetName(mp260file2, "Sheet 1");
+    let MP260Map1 = groupBy(formattedmp260file1, "RowStyleColorList");
+    let MP260Map2 = groupBy(formattedmp260file2, "RowStyleColorList");
+
+    compareAndUpdate1(MP260Map1, MP260Map2, "DELETED", "");
+    compareAndUpdate1(MP260Map2, MP260Map1, "ADDED", "");
+
+    MP260Map1 = convertMapToList(MP260Map1);
+    MP260Map2 = convertMapToList(MP260Map2);
+
+    writeJSONtoXL(MP260Map1, "generatedMP260_old_withComments.xlsx");
+    writeJSONtoXL(MP260Map2, "generatedMP260_new_withComments.xlsx");
+
+}
+
 // Export all methods
-module.exports = { generate, compare };
+module.exports = { generate, compare, compareMP260s };
 
 
 // header: {

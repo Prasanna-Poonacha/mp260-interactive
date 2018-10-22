@@ -2,32 +2,32 @@
 
 const program = require('commander');
 const { prompt } = require('inquirer');
-const { generate, compare } = require("../index");
+const { generate, compare, compareMP260s } = require("../index");
 
 // Questions for generate function
 const generateQuestions = [
     {
         type: 'input',
         name: 'mediatype',
-        message: 'Enter media type ...',
+        message: 'Key in media type ...',
         default: 'ED-2018'
     },
     {
         type: 'input',
         name: 'source',
-        message: 'Enter source ...',
+        message: 'Key in source ...',
         default: '.'
     },
     {
         type: 'input',
         name: 'destination',
-        message: 'Enter destination ...',
+        message: 'Key in destination ...',
         default: '.'
     },
     {
         type: 'input',
         name: 'filename',
-        message: 'Enter filename(eg: MP260.xlsx) ...',
+        message: 'Key in filename(eg: MP260.xlsx) ...',
         default: 'MP260.xlsx'
     },
     {
@@ -48,25 +48,63 @@ const compareQuestions = [
     {
         type: 'input',
         name: 'source',
-        message: 'Enter source ...',
+        message: 'Key in source ...',
         default: '.'
     },
     {
         type: 'input',
         name: 'destination',
-        message: 'Enter destination ...',
+        message: 'Key in destination ...',
         default: '.'
     },
     {
         type: 'input',
         name: 'filename',
-        message: 'Enter filename ...',
+        message: 'Key in filename ...',
         default: 'Cheatsheet_new.xlsx'
     },
     {
         type: 'input',
         name: 'mp260',
-        message: 'Enter generated MP260 filename ...',
+        message: 'Key in generated MP260 filename ...',
+        default: 'generatedMP260.xlsx'
+    },
+    {
+        type: 'list',
+        name: 'confirmation',
+        message: 'Do you want to continue generate the report?(y/n)',
+        choices: [
+            "y",
+            "n"
+        ],
+        default: 'y'
+    }
+];
+
+// Questions for compare function
+const compareMP260Questions = [
+    {
+        type: 'input',
+        name: 'source',
+        message: 'Key in source ...',
+        default: '.'
+    },
+    {
+        type: 'input',
+        name: 'destination',
+        message: 'Key in destination ...',
+        default: '.'
+    },
+    {
+        type: 'input',
+        name: 'filename1',
+        message: 'Key in previous MP260 filename ...',
+        default: 'generatedMP260_old.xlsx'
+    },
+    {
+        type: 'input',
+        name: 'filename2',
+        message: 'Key in current MP260 filename ...',
         default: 'generatedMP260.xlsx'
     },
     {
@@ -98,10 +136,20 @@ program
 program
     .command("compare")
     .alias("c")
-    .description("Compare reports")
+    .description("Compare generated MP260 & cheatsheet")
     .action(() => {
         prompt(compareQuestions).then(answers => {
             compare(answers);
+        })
+    });
+
+program
+    .command("compareMP260")
+    .alias("cMP260")
+    .description("Compare two MP260s")
+    .action(() => {
+        prompt(compareMP260Questions).then(answers => {
+            compareMP260s(answers);
         })
     });
 
@@ -112,3 +160,5 @@ program
 // }
 
 program.parse(process.argv);
+
+//compareMP260s({source:'.',destination:'.',filename1:'MP260_first.xlsx',filename2:'MP260_second.xlsx',confirmation:'y'});
