@@ -188,7 +188,7 @@ program
 
 program
     .command("compareMP260s")
-    .alias("cMP260")
+    .alias("cmp260")
     .description(compareMP260sDesc)
     .action(() => {
         prompt(compareMP260Questions).then(answers => {
@@ -198,7 +198,7 @@ program
 
 program
     .command("compareCheatsheets")
-    .alias("cCS")
+    .alias("ccs")
     .description(compareCheatsheetsDesc)
     .action(() => {
         prompt(compareCheatsheetQuestions).then(answers => {
