@@ -142,13 +142,13 @@ const compareCheatsheetQuestions = [
         type: 'input',
         name: 'filename1',
         message: 'Key in previous cheatsheet filename ...',
-        default: 'cheatsheet_old.xlsx'
+        default: 'Cheatsheet_old.xlsx'
     },
     {
         type: 'input',
         name: 'filename2',
         message: 'Key in current cheatsheet filename ...',
-        default: 'cheatsheet_new.xlsx'
+        default: 'Cheatsheet_new.xlsx'
     },
     {
         type: 'list',
