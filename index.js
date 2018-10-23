@@ -273,7 +273,78 @@ const compareMP260s = (data) => {
 }
 
 const compareCheatsheets = (data) => {
-    console.log(JSON.stringify(data));
+    // console.log(JSON.stringify(data));
+    if (data.confirmation.toLowerCase() !== "y") {
+        return;
+    }
+
+    const cheatSheet_old = excelToJson({
+        sourceFile: path.resolve(data.source, data.filename1)
+    });
+
+    const cheatSheet_current = excelToJson({
+        sourceFile: path.resolve(data.source, data.filename2)
+    });
+
+    var cheatsheetData_old = [];
+    Object.keys(cheatSheet_old).map((key, index) => {
+        var sheet = formatJSON(cheatSheet_old[key]).map(row => {
+            row.RowStyleColorList = row["DIGITAL_SELLING_STYLE"] + row["DIGITAL_COLOR_CODE"];
+            row.SheetName = key;
+            return row;
+        });
+
+        cheatsheetData_old.push(...sheet);
+    });
+
+    var cheatsheetData_current = [];
+    Object.keys(cheatSheet_current).map((key, index) => {
+        var sheet = formatJSON(cheatSheet_current[key]).map(row => {
+            row.RowStyleColorList = row["DIGITAL_SELLING_STYLE"] + row["DIGITAL_COLOR_CODE"];
+            row.SheetName = key;
+            return row;
+        });
+
+        cheatsheetData_current.push(...sheet);
+    });
+
+    var requiredData_old = cheatsheetData_old.map(row => {
+        return {
+            "CATEGORY_DESC": row.CATEGORY_DESC || "Description Not Available!",
+            "DIGITAL_SELLING_STYLE": row.DIGITAL_SELLING_STYLE || "Selling Style Not Available",
+            "DIGITAL_ROOT_STYLE": row.DIGITAL_ROOT_STYLE || "Root Style Not Available",
+            "DIGITAL_COLOR_CODE": row.DIGITAL_COLOR_CODE || "Color Code Not Available",
+            "DIGITAL_ON_FLOOR": row.DIGITAL_ON_FLOOR || "On Floor Not Available",
+            "Grouping Direction": row["Grouping Direction"] || "Grouping Direction Not Available",
+            "SheetName": row.SheetName,
+            "RowStyleColorList": row.RowStyleColorList
+        }
+    });
+    var requiredData_current = cheatsheetData_current.map(row => {
+        return {
+            "CATEGORY_DESC": row.CATEGORY_DESC || "Description Not Available!",
+            "DIGITAL_SELLING_STYLE": row.DIGITAL_SELLING_STYLE || "Selling Style Not Available",
+            "DIGITAL_ROOT_STYLE": row.DIGITAL_ROOT_STYLE || "Root Style Not Available",
+            "DIGITAL_COLOR_CODE": row.DIGITAL_COLOR_CODE || "Color Code Not Available",
+            "DIGITAL_ON_FLOOR": row.DIGITAL_ON_FLOOR || "On Floor Not Available",
+            "Grouping Direction": row["Grouping Direction"] || "Grouping Direction Not Available",
+            "SheetName": row.SheetName,
+            "RowStyleColorList": row.RowStyleColorList
+        }
+    });
+
+    let cheatSheetMap_old = groupBy(requiredData_old, "RowStyleColorList");
+    let cheatSheetMap_current = groupBy(requiredData_current, "RowStyleColorList");
+
+    compareAndUpdate1(cheatSheetMap_old, cheatSheetMap_current, "DELETED", "");
+    compareAndUpdate1(cheatSheetMap_current, cheatSheetMap_old, "ADDED", "");
+
+    cheatSheetMap_old = convertMapToList(cheatSheetMap_old);
+    cheatSheetMap_current = convertMapToList(cheatSheetMap_current);
+
+    writeJSONtoXL(cheatSheetMap_old, "cheatsheet_old_withComments.xlsx");
+    writeJSONtoXL(cheatSheetMap_current, "cheatsheet_current_withComments.xlsx");
+
 }
 
 // Export all methods
