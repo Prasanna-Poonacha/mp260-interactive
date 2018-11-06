@@ -9,6 +9,8 @@ const colorList = "Color\r\nList";
 const moment = require("moment");
 const path = require("path");
 
+//Public functions Start
+
 //function for generating reports
 const generate = (data) => {
     if (data.confirmation.toLowerCase() !== "y") {
@@ -138,106 +140,14 @@ const compare = (data) => {
     writeJSONtoXL(MP260Map, "MP260WithComments.xlsx");
 }
 
-const writeJSONtoXL = (data, filePath) => {
-    let xl = json2xls(data);
-    fs.writeFileSync(filePath, xl, 'binary');
-}
-
-/**
- * Compares firstMap and secondMap, 
- * if entry is not in firstMap, adds valueIfNotPresent to comments
- * if entry is present, adds valueIfPresent
- * Does not return any new value and it alteres the original object
- */
-
-const compareAndUpdate = (firstMap, secondMap, valueIfPresent, valueIfNotPresent) => {
-    for (let row in firstMap) {
-        if (secondMap[row]) {
-            //firstMap[row][0]
-            firstMap[row].map((r) => {
-                r["Comments"] = valueIfPresent;
-            })
-            // add new field in row of firstMap with valuePresent
-        } else {
-            //firstMap[row][0]["Comments"] = valueIfNotPresent;
-            firstMap[row].map((r) => {
-                r["Comments"] = valueIfNotPresent;
-            })
-            // add new field in row of firstMap with valueNotPresent
-        }
-    }
-}
-
-const compareAndUpdate1 = (firstMap, secondMap, valueIfPresent, valueIfNotPresent) => {
-    for (let row in firstMap) {
-        if (secondMap[row]) {
-            firstMap[row].map((r) => {
-                r["Comments"] = valueIfNotPresent;
-            })
-        } else {
-            firstMap[row].map((r) => {
-                r["Comments"] = valueIfPresent;
-            })
-        }
-    }
-}
-/** 
- * Removes the keys from the map and returns only the values as array to be written to excel file
-*/
-const convertMapToList = (map) => {
-    var arrayList = [];
-    Object.keys(map).map((key, index) => {
-        arrayList.push(...map[key]);
-    })
-    return arrayList;
-}
-
-//function for groupBy functionality
-const groupBy = (objectArray, property) => {
-    return objectArray.reduce(function (acc, obj) {
-        var key = obj[property];
-        if (!acc[key]) {
-            acc[key] = [];
-        }
-        acc[key].push(obj);
-        return acc;
-    }, {});
-}
-
-const formatJSONBySheetName = (resultObject, sheetName) => {
-    return resultObject[sheetName].reduce((acc, obj, index, array) => {
-        var newObj = {}
-        if (index !== 0) {
-            for (var key in obj) {
-                newObj[array[0][key]] = obj[key];
-            }
-            acc.push(newObj);
-        }
-        return acc;
-    }, []);
-}
-
-const formatJSON = (resultArray) => {
-    return resultArray.reduce((acc, obj, index, array) => {
-        var newObj = {}
-        if (index !== 0) {
-            for (var key in obj) {
-                newObj[array[0][key]] = obj[key];
-            }
-            acc.push(newObj);
-        }
-        return acc;
-    }, []);
-}
-
 const compareMP260s = (data) => {
 
     if (data.confirmation.toLowerCase() !== "y") {
         return;
     }
 
-     // Read generated MP260 file
-     const mp260file1 = excelToJson({
+    // Read generated MP260 file
+    const mp260file1 = excelToJson({
         sourceFile: path.resolve(data.source, data.filename1),
         sheets: [
             {
@@ -246,8 +156,8 @@ const compareMP260s = (data) => {
         ]
     });
 
-     // Read generated MP260 file
-     const mp260file2 = excelToJson({
+    // Read generated MP260 file
+    const mp260file2 = excelToJson({
         sourceFile: path.resolve(data.source, data.filename2),
         sheets: [
             {
@@ -347,8 +257,288 @@ const compareCheatsheets = (data) => {
 
 }
 
+const compareMP260Diva = (data) => {
+    if (data.confirmation.toLowerCase() !== "y") {
+        return;
+    }
+
+    if (!data.mediatype) {
+        console.log(chalk.yellow("Provide the media type - eg : ED-2018"));
+        return;
+    }
+
+    console.log(chalk.yellow("Extracting data from MP260..."));
+    //get the data from MP260
+    const result = excelToJson({
+        sourceFile: path.resolve(data.source, data.filename1),
+        sheets: [
+            {
+                name: "Other Retail",
+                header: {
+                    rows: 1
+                },
+                columnToKey: {
+                    '*': '{{columnHeader}}'
+                }
+            }
+        ]
+    });
+
+    let newRowsWithSplitColors = [];
+    var filteredData = result["Other Retail"].filter(r => r.Media === data.mediatype);
+
+    if (!filteredData.length) {
+        console.log(chalk.white("No records found for media : " + chalk.blue(data.mediatype)));
+        console.log(chalk.white("Try using a different media!"));
+        return;
+    }
+
+    filteredData.map((row) => {
+        if (row[colorList].split(',').length !== 0) {
+            //console.log(chalk.blue("Number of values - " + row[colorList].split(',').length + " -->" + JSON.stringify(row[colorList])));
+            row[colorList].split(',').map(cl => {
+                //console.log(chalk.yellow("Copying rows--> " + cl));
+                let rowCopy = Object.assign({}, row);
+                rowCopy[colorList] = cl;
+                rowCopy.RowStyleColorList = rowCopy["Selling\r\nStyle"] + rowCopy[colorList];
+                newRowsWithSplitColors.push(rowCopy);
+            })
+        }
+
+    });
+
+    var uniqueDataWithOutDuplicates = [];
+    var groupByConcatenatedColumn = groupBy(newRowsWithSplitColors, "RowStyleColorList");
+    Object.keys(groupByConcatenatedColumn).map((key, index) => {
+        if (groupByConcatenatedColumn[key].length > 1) {
+            groupByConcatenatedColumn[key].sort(function (a, b) {
+                return moment.max([moment(a["Start\r\nDate/Time"].split("US/Eastern")[0].trim(), "YYYY-MM-DD HH:mm Z"), moment(b["Start\r\nDate/Time"].split("US/Eastern")[0].trim(), "YYYY-MM-DD HH:mm Z")]);
+            })
+            uniqueDataWithOutDuplicates.push(groupByConcatenatedColumn[key][0]);
+        } else {
+            uniqueDataWithOutDuplicates.push(groupByConcatenatedColumn[key][0]);
+        }
+    })
+
+    //get the data from Diva Extract
+    console.log(chalk.yellow("Extracting data from Diva Extract..."));
+    const resultDivaExtract = excelToJson({
+        sourceFile: path.resolve(data.source, data.filename2),
+        columnToKey: {
+            A: 'StyleDesc'
+        }
+    });
+
+    const consolidateStyleDescAllSheets = [];
+    const pattern = /\b\d{6}\b/g;
+
+    Object.keys(resultDivaExtract).map((key, index) => {
+        resultDivaExtract[key].map((row) => {
+            if (row.StyleDesc.match(pattern) !== null) {
+                row.StyleDesc.match(pattern).map((styleno) => {
+                    consolidateStyleDescAllSheets.push({ "Category": key, "StyleNumber": styleno });
+                });
+            }
+        })
+    })
+
+    //compare
+    console.log(chalk.yellow("Comparing..."));
+    const mp260DataGroupedbySellingStyle = groupBy(uniqueDataWithOutDuplicates, "Selling\r\nStyle");
+    const divaDataGroupedbyStyleNumber = groupBy(consolidateStyleDescAllSheets, "StyleNumber");
+
+    const report1 = compareAndUpdateMissingInDiva(mp260DataGroupedbySellingStyle, divaDataGroupedbyStyleNumber, "", "Missing in DIVA");
+    const report2 = compareAndUpdateMissingInMP260(divaDataGroupedbyStyleNumber, mp260DataGroupedbySellingStyle, "", "Missing in MP260");
+    
+    //create report
+    console.log(chalk.yellow("Generating report..."));
+    writeJSONtoXL([...report1,...report2], "combinedReportMP260Diva.xlsx");
+}
+
+//Public functions End
+
+//Private functions Start
+
+const writeJSONtoXL = (data, filePath) => {
+    let xl = json2xls(data);
+    fs.writeFileSync(filePath, xl, 'binary');
+}
+
+
+const compareAndUpdateMissingInDiva = (firstMap, secondMap, valueIfPresent, valueIfNotPresent) => {
+    var requiredData = [];
+    for (let row in firstMap) {
+        if (secondMap[row]) {
+            //firstMap[row][0]
+            firstMap[row].map((r) => {
+                requiredData.push({
+                    "Media": r["Media"],
+                    "Report Category": r["Report Category"],
+                    "VSD Class": r["VSD\r\nClass"],
+                    "Subbrand": r["Subbrand"],
+                    "Root Style": r["Root\r\nStyle"],
+                    "Description": r["Description"],
+                    "Selling Style": r["Selling\r\nStyle"],
+                    "Color List": r["Color\r\nList"],
+                    "Start Date/Time": r["Start\r\nDate/Time"],
+                    "Comments": valueIfPresent
+                });
+            })
+            // add new field in row of firstMap with valuePresent
+        } else {
+            //firstMap[row][0]["Comments"] = valueIfNotPresent;
+            firstMap[row].map((r) => {
+                requiredData.push({
+                    "Media": r["Media"],
+                    "Report Category": r["Report Category"],
+                    "VSD Class": r["VSD\r\nClass"],
+                    "Subbrand": r["Subbrand"],
+                    "Root Style": r["Root\r\nStyle"],
+                    "Description": r["Description"],
+                    "Selling Style": r["Selling\r\nStyle"],
+                    "Color List": r["Color\r\nList"],
+                    "Start Date/Time": r["Start\r\nDate/Time"],
+                    "Comments": valueIfNotPresent
+                });
+            })
+            // add new field in row of firstMap with valueNotPresent
+        }
+    }
+    return requiredData;
+}
+
+const compareAndUpdateMissingInMP260 = (firstMap, secondMap, valueIfPresent, valueIfNotPresent) => {
+    var requiredData = [];
+    for (let row in firstMap) {
+        if (secondMap[row]) {
+            //firstMap[row][0]
+            firstMap[row].map((r) => {
+                requiredData.push({
+                    "Media": secondMap[row][0]["Media"],
+                    "Report Category": secondMap[row][0]["Report Category"],
+                    "VSD Class": secondMap[row][0]["VSD\r\nClass"],
+                    "Subbrand": secondMap[row][0]["Subbrand"],
+                    "Root Style": secondMap[row][0]["Root\r\nStyle"],
+                    "Description": secondMap[row][0]["Description"],
+                    "Selling Style": secondMap[row][0]["Selling\r\nStyle"],
+                    "Color List": secondMap[row][0]["Color\r\nList"],
+                    "Start Date/Time": secondMap[row][0]["Start\r\nDate/Time"],
+                    "Comments": valueIfPresent
+                });
+            })
+            // add new field in row of firstMap with valuePresent
+        } else {
+            //firstMap[row][0]["Comments"] = valueIfNotPresent;
+            firstMap[row].map((r) => {
+                requiredData.push({
+                    "Media": "",
+                    "Report Category": "",
+                    "VSD Class": "",
+                    "Subbrand": "",
+                    "Root Style": "",
+                    "Description": "",
+                    "Selling Style": row,
+                    "Color List": "",
+                    "Start Date/Time": "",
+                    "Comments": valueIfNotPresent
+                });
+            })
+            // add new field in row of firstMap with valueNotPresent
+        }
+    }
+    return requiredData;
+}
+/**
+ * Compares firstMap and secondMap, 
+ * if entry is not in firstMap, adds valueIfNotPresent to comments
+ * if entry is present, adds valueIfPresent
+ * Does not return any new value and it alteres the original object
+ */
+
+const compareAndUpdate = (firstMap, secondMap, valueIfPresent, valueIfNotPresent) => {
+    for (let row in firstMap) {
+        if (secondMap[row]) {
+            //firstMap[row][0]
+            firstMap[row].map((r) => {
+                r["Comments"] = valueIfPresent;
+            })
+            // add new field in row of firstMap with valuePresent
+        } else {
+            //firstMap[row][0]["Comments"] = valueIfNotPresent;
+            firstMap[row].map((r) => {
+                r["Comments"] = valueIfNotPresent;
+            })
+            // add new field in row of firstMap with valueNotPresent
+        }
+    }
+}
+
+const compareAndUpdate1 = (firstMap, secondMap, valueIfPresent, valueIfNotPresent) => {
+    for (let row in firstMap) {
+        if (secondMap[row]) {
+            firstMap[row].map((r) => {
+                r["Comments"] = valueIfNotPresent;
+            })
+        } else {
+            firstMap[row].map((r) => {
+                r["Comments"] = valueIfPresent;
+            })
+        }
+    }
+}
+/** 
+ * Removes the keys from the map and returns only the values as array to be written to excel file
+*/
+const convertMapToList = (map) => {
+    var arrayList = [];
+    Object.keys(map).map((key, index) => {
+        arrayList.push(...map[key]);
+    })
+    return arrayList;
+}
+
+//function for groupBy functionality
+const groupBy = (objectArray, property) => {
+    return objectArray.reduce(function (acc, obj) {
+        var key = obj[property];
+        if (!acc[key]) {
+            acc[key] = [];
+        }
+        acc[key].push(obj);
+        return acc;
+    }, {});
+}
+
+const formatJSONBySheetName = (resultObject, sheetName) => {
+    return resultObject[sheetName].reduce((acc, obj, index, array) => {
+        var newObj = {}
+        if (index !== 0) {
+            for (var key in obj) {
+                newObj[array[0][key]] = obj[key];
+            }
+            acc.push(newObj);
+        }
+        return acc;
+    }, []);
+}
+
+const formatJSON = (resultArray) => {
+    return resultArray.reduce((acc, obj, index, array) => {
+        var newObj = {}
+        if (index !== 0) {
+            for (var key in obj) {
+                newObj[array[0][key]] = obj[key];
+            }
+            acc.push(newObj);
+        }
+        return acc;
+    }, []);
+}
+
+//Private functions End
+
 // Export all methods
-module.exports = { generate, compare, compareMP260s, compareCheatsheets };
+module.exports = { generate, compare, compareMP260s, compareCheatsheets, compareMP260Diva };
 
 
 // header: {

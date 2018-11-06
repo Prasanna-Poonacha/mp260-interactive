@@ -2,12 +2,13 @@
 
 const program = require('commander');
 const { prompt } = require('inquirer');
-const { generate, compare, compareMP260s, compareCheatsheets } = require("../index");
+const { generate, compare, compareMP260s, compareCheatsheets, compareMP260Diva } = require("../index");
 const chalk = require("chalk");
 const generateDesc = chalk.cyan("Generate report from MP260");
 const compareDesc = chalk.cyan("Compare generated MP260 & cheatsheet");
 const compareMP260sDesc = chalk.cyan("Compare two MP260s");
 const compareCheatsheetsDesc = chalk.cyan("Compare two Cheatsheets");
+const compareMP260DivaDesc = chalk.cyan("MP260 to Diva Extract Comparison");
 const programDesc = chalk.yellow("Digital Commerce Services - Operations Automation");
 
 // Questions for generate function
@@ -162,6 +163,49 @@ const compareCheatsheetQuestions = [
     }
 ];
 
+const generateQuestionscompareMP260Diva = [
+    {
+        type: 'input',
+        name: 'mediatype',
+        message: 'Key in media type ...',
+        default: 'EF-2018'
+    },
+    {
+        type: 'input',
+        name: 'source',
+        message: 'Key in source ...',
+        default: '.'
+    },
+    {
+        type: 'input',
+        name: 'destination',
+        message: 'Key in destination ...',
+        default: '.'
+    },
+    {
+        type: 'input',
+        name: 'filename1',
+        message: 'Key in filename(eg: MP260_VSL.xlsx) ...',
+        default: 'MP260_VSL.xlsx'
+    },
+    {
+        type: 'input',
+        name: 'filename2',
+        message: 'Key in filename(eg: DIVA_extract.xlsx) ...',
+        default: 'DIVA_extract.xlsx'
+    },
+    {
+        type: 'list',
+        name: 'confirmation',
+        message: 'Do you want to continue generate the report?(y/n)',
+        choices: [
+            "y",
+            "n"
+        ],
+        default: 'y'
+    }
+];
+
 program
     .version("0.0.1")
     .description(programDesc);
@@ -206,13 +250,26 @@ program
         })
     });
 
+program
+    .command("compareMP260Diva")
+    .alias("cmdi")
+    .description(compareMP260DivaDesc)
+    .action(() => {
+        prompt(generateQuestionscompareMP260Diva).then(answers => {
+            compareMP260Diva(answers);
+        })
+    });
+
+
+
+program.parse(process.argv);
+
 // Assert that a VALID command is provided 
 // if (!process.argv.slice(2).length || !/[arudl]/.test(process.argv.slice(2))) {
 //     program.outputHelp();
 //     process.exit();
 // }
 
-program.parse(process.argv);
-
 //compareMP260s({source:'.',destination:'.',filename1:'MP260_first.xlsx',filename2:'MP260_second.xlsx',confirmation:'y'});
 //compareCheatsheets({source:'.',destination:'.',filename1:'cheatsheet_old.xlsx',filename2:'cheatsheet_new.xlsx',confirmation:'y'});
+//compareMP260Diva({ mediatype: 'EF-2018', source: '.', destination: '.', filename1: 'MP260_VSL.xlsx', filename2: 'DIVA_extract.xlsx', confirmation: 'y' });
